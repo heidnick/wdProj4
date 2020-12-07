@@ -3,13 +3,23 @@
     "version": "0.0.0",
     "description": "RESTful Web Server and Single Page Application",
     "author": {
+        "name": "Nick Heid",
+        "email": "heid7732@stthomas.edu"
+    },
+    "contributors": [{
+        "name": "Nick Heid",
+        "email": "heid7732@stthomas.edu"
+    },{
         "name": "",
         "email": ""
-    },
+    },{
+        "name": "",
+        "email": ""
+    }],
     "main": "server.js",
     "repository": {
         "type": "git",
-        "url": ""
+        "url": "https://github.com/heidnick/wdProj4"
     },
     "dependencies": {
         "express": "^4.17.1",
