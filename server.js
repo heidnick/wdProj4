@@ -33,11 +33,29 @@ app.use(express.static(public_dir));
 app.get('/codes', (req, res) => {
     console.log('/codes')
     let url = new URL(req.protocol + '://' + req.get('host') + req.originalUrl);
-    Promise.all([databaseSelect('SELECT * FROM Codes;', [])]).then((results) => {
-        var obj = JSON.parse(JSON.stringify(results));
+    let code = url.searchParams.get('code');
+    let query = '';
+    if (code == null){
+        //Default to return all codes
+        query = 'SELECT * FROM Codes;';
+    }
+    else {
+        //Else, format query
+        code = code.split(',');
+        query = 'SELECT * FROM Codes WHERE code IN ('
+        for (let i=0; i<code.length; i++) {
+            query = query + code[i] + ',';
+        }
+        query = query.substring(0, query.length - 1);
+        query = query + ');';
+    }
+
+    Promise.all([databaseSelect(query, [])]).then((results) => {
+        var obj = JSON.parse(JSON.stringify(results[0]));
         res.status(200).type('json').send(obj);
     }).catch((error) => {
         console.log(error);
+        res.status(500).send('Database access error');
     });
 });
 
@@ -45,11 +63,29 @@ app.get('/codes', (req, res) => {
 // Respond with list of neighborhood ids and their corresponding neighborhood name
 app.get('/neighborhoods', (req, res) => {
     let url = new URL(req.protocol + '://' + req.get('host') + req.originalUrl);
-    Promise.all([databaseSelect('SELECT * FROM Neighborhoods;', [])]).then((results) => {
+    let query = '';
+    let id = url.searchParams.get('id');
+    if (id == null){
+        //Default to return all neighborhoods
+        query = 'SELECT * FROM Neighborhoods;';
+    }
+    else {
+        //Else, format query
+        id = id.split(',');
+        query = 'SELECT * FROM Neighborhoods WHERE neighborhood_number IN ('
+        for (let i=0; i<id.length; i++) {
+            query = query + id[i] + ',';
+        }
+        query = query.substring(0, query.length - 1);
+        query = query + ');';
+    }
+
+    Promise.all([databaseSelect(query, [])]).then((results) => {
         var obj = JSON.parse(JSON.stringify(results));
         res.status(200).type('json').send(obj);
     }).catch((error) => {
         console.log(error);
+        res.status(500).send('Database access error');
     });
 });
 
