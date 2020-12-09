@@ -61,6 +61,33 @@ function init() {
     }).catch((error) => {
         console.log('Error:', error);
     });
+
+
+
+    //Update input box text when map is moved
+    map.on('moveend', function () {
+        //Update lat/long
+        document.getElementById("long").value = map.getCenter().lng;
+        document.getElementById("lat").value = map.getCenter().lat;
+
+        //Update Address: make a call to Nominatim
+        getJSON('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + map.getCenter().lat + '&lon=' + map.getCenter().lng).then((result) => {
+
+            //Get address from result
+            var road = result.address.road + ", ";
+            var city = result.address.city + ", ";
+            if (city === "undefined, "){
+                city = "";
+            }
+            if (road === "undefined, "){
+                road = "";
+            }
+            document.getElementById("addr").value = road + city + "MN";
+
+        }).catch((error) => {
+            console.log('Error:', error);
+        });
+    });
 }
 
 function getJSON(url) {
@@ -76,4 +103,56 @@ function getJSON(url) {
             }
         });
     });
+}
+
+$(document).ready(function(){
+    //Update map when longitude/latitude is submitted
+    $("#lnglat").submit(function(){
+        var long = document.getElementById("long").value;
+        var lat = document.getElementById("lat").value;
+
+        //Clamp values to keep within bounds
+        lat = clamp(lat, 44.883658, 45.008206);
+        long = clamp(long, -93.217977, -92.993787)
+
+        //Reset input values in case the values were outside the bounds
+        document.getElementById("long").value = long;
+        document.getElementById("lat").value = lat;
+
+        //Pan map
+        var latlng = L.latLng(lat, long);
+        map.panTo(latlng);
+
+        return false;
+    });
+    //Update map when address is submitted
+    $("#address").submit(function(){
+        var address = document.getElementById("addr").value;
+        //var address = $(this).serialize();
+        
+        //Make a call to Nominatim
+        getJSON('https://nominatim.openstreetmap.org/search?q=' + address + '&format=json').then((result) => {
+
+            //Get Lat/Long from result
+            var lat=result[0].lat;
+            var long=result[0].lon;
+
+            //Clamp values to keep within bounds
+            lat = clamp(lat, 44.883658, 45.008206);
+            long = clamp(long, -93.217977, -92.993787)
+
+            //Pan map
+            var latlng = L.latLng(lat, long);
+            map.panTo(latlng);
+
+        }).catch((error) => {
+            console.log('Error:', error);
+        });
+
+        return false;
+    });
+});
+
+function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
 }
