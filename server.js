@@ -33,6 +33,7 @@ app.use(express.static(public_dir));
 app.get('/codes', (req, res) => {
     console.log('/codes')
     let url = new URL(req.protocol + '://' + req.get('host') + req.originalUrl);
+    let params = [];
     let code = url.searchParams.get('code');
     let query = '';
     if (code == null){
@@ -44,14 +45,16 @@ app.get('/codes', (req, res) => {
         code = code.split(',');
         query = 'SELECT * FROM Codes WHERE code IN ('
         for (let i=0; i<code.length; i++) {
-            query = query + code[i] + ',';
+            query = query + '?,';
+            params.push(code[i]);
         }
         query = query.substring(0, query.length - 1);
         query = query + ');';
     }
 
-    Promise.all([databaseSelect(query, [])]).then((results) => {
-        var obj = JSON.parse(JSON.stringify(results[0]));
+    Promise.all([databaseSelect(query, params)]).then((results) => {
+        var obj = JSON.stringify(results[0]);
+        obj = JSON.stringify(JSON.parse(obj), null, 2);
         res.status(200).type('json').send(obj);
     }).catch((error) => {
         console.log(error);
@@ -63,7 +66,8 @@ app.get('/codes', (req, res) => {
 // Respond with list of neighborhood ids and their corresponding neighborhood name
 app.get('/neighborhoods', (req, res) => {
     let url = new URL(req.protocol + '://' + req.get('host') + req.originalUrl);
-    let query = '';
+    let params = [];
+    let query = 'SELECT * FROM Neighborhoods';
     let id = url.searchParams.get('id');
     if (id == null){
         //Default to return all neighborhoods
@@ -74,14 +78,16 @@ app.get('/neighborhoods', (req, res) => {
         id = id.split(',');
         query = 'SELECT * FROM Neighborhoods WHERE neighborhood_number IN ('
         for (let i=0; i<id.length; i++) {
-            query = query + id[i] + ',';
+            query = query + '?,';
+            params.push(id[i]);
         }
         query = query.substring(0, query.length - 1);
         query = query + ');';
     }
 
-    Promise.all([databaseSelect(query, [])]).then((results) => {
-        var obj = JSON.parse(JSON.stringify(results));
+    Promise.all([databaseSelect(query, params)]).then((results) => {
+        var obj = JSON.stringify(results[0]);
+        obj = JSON.stringify(JSON.parse(obj), null, 2);
         res.status(200).type('json').send(obj);
     }).catch((error) => {
         console.log(error);
@@ -93,11 +99,92 @@ app.get('/neighborhoods', (req, res) => {
 // Respond with list of crime incidents
 app.get('/incidents', (req, res) => {
     let url = new URL(req.protocol + '://' + req.get('host') + req.originalUrl);
-    Promise.all([databaseSelect('SELECT * FROM Incidents;', [])]).then((results) => {
-        var obj = JSON.parse(JSON.stringify(results));
+    let params = [];
+    let flag = 0;
+    let start_date = url.searchParams.get('start_date');
+    let end_date = url.searchParams.get('end_date');
+    let code = url.searchParams.get('code');
+    let grid = url.searchParams.get('grid');
+    let neighborhood = url.searchParams.get('neighborhood');
+    let limit = url.searchParams.get('limit');
+    //let query = 'SELECT * FROM Incidents';
+    let query = `select case_number,
+                    case when LENGTH(date_time)>0 
+                        then SUBSTR(date_time, 0, 11) 
+                        else date_time end date, 
+                    CASE WHEN length(date_time)>0 
+                        THEN SUBSTR(date_time,12,length(date_time))  
+                        ELSE NULL END as time,
+                        code, incident, police_grid, neighborhood_number, block
+                from Incidents`;
+    console.log(url.searchParams);
+    //CODE            
+    if (code != null){
+        flag = 1;
+        code = code.split(',');
+        query = query + ' WHERE code IN ('
+        for (let i=0; i<code.length; i++) {
+            query = query + '?,';
+            params.push(code[i]);
+        }
+        query = query.substring(0, query.length - 1);
+        query = query + ')';
+    }
+    //START_DATE
+    if (start_date != null){
+        if (flag){ query += ' AND ';}else{query += ' WHERE '; flag=1;}
+        console.log("start-date");
+        query = query + 'date > ? ';
+        params.push(start_date);
+    }
+    //END_DATE
+    if (end_date != null){
+        if (flag){ query += ' AND '}else{query +=' WHERE '; flag=1;}
+        console.log("end-date");
+        query = query + 'date < ? ';
+        params.push(end_date);
+    }
+    //GRID
+    console.log(grid);
+    if (grid != null){
+        grid = grid.split(',');
+        if (flag){ query += ' AND '}else{query += '  WHERE '; flag=1;}
+        query += ' police_grid IN (';
+        for (let i=0; i<grid.length; i++) {
+            query = query + '?,';
+            params.push(grid[i]);
+        }
+        query = query.substring(0, query.length - 1);
+        query = query + ')';
+    }
+    //NEIGHBORHOOD
+    if (neighborhood != null){
+        neighborhood = neighborhood.split(',');
+        if (flag){ query += ' AND '}else{query += '  WHERE '; flag=1;}
+        query += ' neighborhood_number IN (';
+        for (let i=0; i<neighborhood.length; i++) {
+            query = query + '?,';
+            params.push(neighborhood[i]);
+        }
+        query = query.substring(0, query.length - 1);
+        query += ')';
+    }
+    query += ' ORDER BY DATE DESC, TIME DESC';
+    //LIMIT
+    if (limit != null){
+        query += ' LIMIT ?';
+        params.push(limit);
+    }else {
+        query += ' LIMIT 1000';
+    }
+
+    Promise.all([databaseSelect(query, params)]).then((results) => {
+        var obj = JSON.stringify(results[0]);
+        obj = JSON.stringify(JSON.parse(obj), null, 2);
         res.status(200).type('json').send(obj);
     }).catch((error) => {
         console.log(error);
+        res.status(500).send('Database access error');
     });
 });
 
@@ -127,8 +214,7 @@ function databaseSelect(query, params) {
                 reject(err);
             }
             else {
-                resolve(rows);
-                
+                resolve(rows); 
             }
         })
     })
