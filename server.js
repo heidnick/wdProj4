@@ -192,17 +192,39 @@ app.get('/incidents', (req, res) => {
 // Respond with 'success' or 'error'
 app.put('/new-incident', (req, res) => {
     let url = new URL(req.protocol + '://' + req.get('host') + req.originalUrl);
-    /*var test = {
-        case_number: 14171569,
-        date_time: 
-    }*/
-    let query =  `INSERT INTO Incidents (case_number, date_time, code, incident, police_grid, neighborhood_number, block) 
-                  VALUES ($case_number, $date_time, $code, $incident, $police_grid, $neighborhood_number, $block)`;
-    Promise.all([databaseInsert(query, url.searchParams)]).then((results) => {
+
+    let caseNumber = url.searchParams.get("case_number");
+    let caseNumber = url.searchParams.get("date_time");
+    let caseNumber = url.searchParams.get("code");
+    let caseNumber = url.searchParams.get("incident");
+    let caseNumber = url.searchParams.get("police_grid");
+    let caseNumber = url.searchParams.get("neighborhood_number");
+    let caseNumber = url.searchParams.get("block");
+
+    //console.log(url.searchParams.get("case_number"));
+    //console.log(url.searchParams.get("police_grid"));
+
+    //let case_number =
+    let queryNumbers = 'SELECT case_number FROM Incidents WHERE case_number = ?';
+    var check = false;
+    let query =  'INSERT INTO Incidents (case_number, date_time, code, incident, police_grid, neighborhood_number, block) VALUES (?, ?, ?, ?, ?, ?, ?)';
+
+    databaseSelect(queryNumbers,[caseNumber,date_time,code,incident, police_grid,neighborhood_number,block]).then((rows)=>{
+        if(rows.length>0){
+            return new Promise((resolve,reject)=>{
+                reject('Incident number already exists');
+            });
+
+        } else {
+            return databaseInsert(query,[caseNumber, ]);
+        }
+    }).then(()=>{
         res.status(200).type('txt').send('success');
-    }).catch((error) => {
+    }).catch((err)=>{
+        res.status(500).type('txt').send(err);
         console.log(error);
     });
+
 });
 
 
