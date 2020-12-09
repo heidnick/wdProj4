@@ -26,9 +26,23 @@
     <!-- End: Application -->
 </head>
 <body onload="init()">
+
+    <!-- Longitude/Latitude input -->
+    <form id="lnglat" action="" style="float:left;padding-left: 20px">
+        Longitude: <br><input id="long" type="number"  step=".00000000000001" name="Long" value="-93.102222"><br>
+        Latitude: <br><input id="lat" type="number"  step=".00000000000001" name="Lat" value="44.955139"><br>
+        <input type="submit" value="Submit">
+    </form>
+    <!-- Address input -->
+    <form id="address" action="" style="float:left;padding-left: 20px">
+        Address: <br><input id="addr" type="text" name="addr" value="Minnesota State Capitol"><br>
+        <input type="submit" value="Submit">
+    </form> 
+    
     <!-- Main app -->
     <div id="app">
         <div id="leafletmap"></div>
     </div>
+
 </body>
 </html>
