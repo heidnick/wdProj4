@@ -72,17 +72,8 @@ function init() {
 
         //Update Address: make a call to Nominatim
         getJSON('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + map.getCenter().lat + '&lon=' + map.getCenter().lng).then((result) => {
-
             //Get address from result
-            var road = result.address.road + ", ";
-            var city = result.address.city + ", ";
-            if (city === "undefined, "){
-                city = "";
-            }
-            if (road === "undefined, "){
-                road = "";
-            }
-            document.getElementById("addr").value = road + city + "MN";
+            document.getElementById("addr").value = result.display_name;
 
         }).catch((error) => {
             console.log('Error:', error);
