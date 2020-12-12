@@ -194,12 +194,12 @@ app.put('/new-incident', (req, res) => {
     let url = new URL(req.protocol + '://' + req.get('host') + req.originalUrl);
 
     let caseNumber = url.searchParams.get("case_number");
-    let caseNumber = url.searchParams.get("date_time");
-    let caseNumber = url.searchParams.get("code");
-    let caseNumber = url.searchParams.get("incident");
-    let caseNumber = url.searchParams.get("police_grid");
-    let caseNumber = url.searchParams.get("neighborhood_number");
-    let caseNumber = url.searchParams.get("block");
+    let date_time = url.searchParams.get("date_time");
+    let code = url.searchParams.get("code");
+    let incident = url.searchParams.get("incident");
+    let police_grid = url.searchParams.get("police_grid");
+    let neighborhood_number = url.searchParams.get("neighborhood_number");
+    let block = url.searchParams.get("block");
 
     //console.log(url.searchParams.get("case_number"));
     //console.log(url.searchParams.get("police_grid"));
