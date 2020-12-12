@@ -6,3 +6,49 @@
     width: 800px;  /* feel free to change this! */
     height: 600px; /* feel free to change this! */
 }
+.section{
+border-style:double;
+border-color:black;
+padding-top: 5rem;
+padding-right: 5rem;
+padding-bottom: 5rem;
+padding-left: 5rem;
+margin-top: 2rem;
+margin-bottom: 2rem;
+margin-right: 2rem;
+margin-left: 2rem;
+}
+body{
+background-color:grey;
+}
+.demo{
+
+}
+.things{
+border-style:double;
+border-color:black;
+}
+.tools{
+border-style:double;
+border-color:black;
+}
+.left{
+float: left;
+
+}
+.right{
+float: right;
+
+}
+img{
+width: 15rem;
+}
+iframe { 
+width: 500px;
+height: 500px: 
+margin-left: auto; 
+margin-right: auto; 
+}
+p{
+text-align: center;
+}
