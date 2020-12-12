@@ -123,6 +123,14 @@ function init() {
                     this.lon = data[0].lon;
                     onMapUpdate(this.lat, this.lon);
                 });
+            },
+            changeLat(lat, increment) {
+                var latlng = L.latLng(lat + 0.01 * increment, this.lon);
+                map.panTo(latlng);
+            },
+            changeLon(lon, increment) {
+                var latlng = L.latLng(this.lat, lon + 0.01 * increment);
+                map.panTo(latlng);
             }
         },
 /*  - Buttons changeLat and changeLon are not implemented yet, they should just increment 
@@ -133,18 +141,24 @@ function init() {
 */
         template: `
             <div v-if="this.is_loaded">
-                <p>Lat: </p>
-                <button v-on:click="changeLat(lat,0)">-</button>
-                <button v-on:click="changeLat(lat,1)">+</button>
-                <input v-model.lazy="lat"/>
-                <p>Lon: </p>
-                <button v-on:click="changeLon(lon,0)">-</button>
-                <button v-on:click="changeLon(lon,1)">+</button>
-                <input v-model.lazy="lon"/>
-                <button v-on:click="updateMapLtLn(lat, lon)">Find Lat/Lng</button>
-                <p>{{address}}</p>
-                <button v-on:click="updateMapAddr(address)">Find Address</button>
-                <table>
+                <div style="float:left; padding-left: 3rem; padding-top: 2rem;">
+                    <p>Lat: </p>
+                    <button v-on:click="changeLat(lat,-1)">-</button>
+                    <button v-on:click="changeLat(lat,1)">+</button>
+                    <input v-model.lazy="lat"/>
+                    <p>Lon: </p>
+                    <button v-on:click="changeLon(lon,-1)">-</button>
+                    <button v-on:click="changeLon(lon,1)">+</button>
+                    <input v-model.lazy="lon"/>
+                    </br>
+                    <button v-on:click="updateMapLtLn(lat, lon)">Find Lat/Lng</button>
+                    </br>
+                    <p> Address: </p>
+                    <input size="45" v-model.lazy="address"/>
+                    </br>
+                    <button v-on:click="updateMapAddr(address)">Find Address</button>
+                </div>
+                <table style="clear:left">
                     <tr>
                         <th>Number</th>
                         <th>Date</th>
@@ -211,6 +225,19 @@ function init() {
         app.updateMapLtLn(app._data.lat, app._data.lon);
     }
 
+    function onMapMoveend() {
+        app._data.lat = map.getCenter().lat;
+        app._data.lon = map.getCenter().lng;
+
+        getJSON('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + map.getCenter().lat + '&lon=' + map.getCenter().lng).then((result) => {
+            //Get address from result
+            app._data.address = result.display_name;
+
+        }).catch((error) => {
+            console.log('Error:', error);
+        });
+    }
+
 //Testing input
 //Pelham Boulevard, Saint Paul, Ramsey County, Minnesota, 55104, United States of America
     function onMapUpdate(lat, lon){
@@ -224,7 +251,8 @@ function init() {
         map.panTo(latlng);
     }
 
-    map.on('click', onMapClick);
+    //map.on('click', onMapClick);
+    map.on('moveend', onMapMoveend);
     
 }
 
