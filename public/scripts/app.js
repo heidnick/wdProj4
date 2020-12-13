@@ -23,9 +23,129 @@ let neighborhood_markers =
     {location: [44.949203, -93.093739], marker: null}
 ];
 
+
+/*--------------------Select Date/Time Component (probably move this to new file and need to split up date and time) --------------*/
+Vue.component('select-date-component', {
+    data: function() {
+        return { date: 0},
+        {
+            years: [2014,2015,2016,2017,2018,2019,2020],
+            big_months: [1, 3, 5, 7, 8, 10, 12],
+            lp_feb_flg: 0,
+            feb_flg: 0,
+            bigm_flg: 0,
+            year: 0,
+            month: 0,
+            hour: 0,
+            min: 0,
+            sec: 0,
+            day: 0,     
+        }
+    },
+    props: ['date'],
+    methods: {
+        showDays: function(year, month){
+            console.log('this.months: ' + this.month);
+            if((this.year == 2020 || this.year == 2016) && this.month == 2){
+                this.lp_feb_flg = 1;
+                console.log('lp_feb_flg');
+            }else if(this.month == 2){
+                this.lp_feb_flg = 0;
+                this.bigm_flag = 0;
+                this.feb_flg = 1;
+            }else if(this.big_months.includes(parseInt(this.month))){
+                this.feb_flg = 0;
+                this.lp_feb_flg = 0;
+                this.bigm_flg = 1;
+                console.log('hits big case');
+            }else{
+                this.lp_feb_flg = 0;
+                this.feb_flg = 0;
+                this.bigm_flg = 0;
+            }
+            console.log('leap', this.lp_feb_flg);
+            console.log('big', this.bigm_flg);
+            console.log('feb', this.feb_flg);
+        },
+        packDate: function(year, month, day, hour, min, sec){
+            this.date = year + "-";
+            if (month < 10 ){
+                this.date += "0" + month + "-";
+            }else{this.date+=month+'-';}
+            if (day < 10 ){
+                this.date += "0" + day+"T";
+            }else{this.date+=day+"T";}
+            if (hour < 10) {
+                this.date += "0" + hour;
+            }else{this.date+=hour;}
+            this.date+=":";
+            if (min < 10){
+                this.date += "0" + min;
+            }else{this.date+=min;}
+            this.date+=":";
+            if (sec < 10){
+                this.date += "0" + sec;
+            }else{this.date+=sec;}
+            this.date+=".000";
+            //console.log('finished date ' + this.date);
+            this.$emit('clicked-finished-date', this.date);
+        }
+    },
+    template: `
+        <div>
+            <label>Select Year</label>
+            <select v-model="year" @change="showDays()">
+                <option v-for="num in years">{{num}}</option>
+            </select>
+            <label>Select Month</label>
+            <select v-model="month" @change="showDays()">
+                <option v-for="num in 12">{{num}}</option>
+            </select>
+            <label>Select Day</label>
+            <div v-if="lp_feb_flg">
+                <select>
+                    <option v-for="i in 29" v-model="day">{{i}}</option>
+                </select>
+            </div>    
+            <div v-else-if="feb_flg">
+                <select v-model="day">
+                    <option v-for="i in 28" v-model="day">{{i}}</option>
+                </select>
+            </div>
+            <div v-else-if="bigm_flg">
+                <select v-model="day">
+                    <option v-for="i in 31">{{i}}</option>
+                </select>
+            </div>
+            <div v-else>
+                <select v-model="day">
+                    <option v-for="i in 30">{{i}}</option>
+                </select>
+            </div>
+            <label>Select Hour</label>
+            <select v-model="hour">
+                <option v-for="num in 24">{{num - 1}}</option>
+            </select>
+            <label>Select Minute</label>
+            <select v-model="min">
+                <option v-for="num in 60">{{num - 1}}</option>
+            </select>
+            <label>Select Seconds</label>
+            <select  v-model="sec">
+                <option v-for="num in 60">{{num - 1}}</option>
+            </select>
+            <button  v-on:click="packDate(year, month, day, hour, min, sec)">Finished Picking Date</button>
+        </div>
+    `
+});
+
+
+
+
 function init() {
     let crime_url = 'http://localhost:8000';
 
+/*------------------------Main Component--------------------------*/
     app = new Vue({
         el: '#app',
         data: {
@@ -37,10 +157,14 @@ function init() {
             incidents: [],
             incident_types: new Map(),
             neighborhoods: new Map(),
+            selected_nbh_name: [],
             codes: new Map(),
             lat: 44.955139,
             lon: -93.102222,
             address: "",
+            limit: 1000,
+            startdate: 0,
+            enddate: 0,
 
             map: {
                 center: {
@@ -58,41 +182,8 @@ function init() {
         //ALL MOUNTED() api calls will only run on initialization, cannot be called again
         //Copy and paste these into methods as functions to make another call to the db 
         mounted() {
-            fetch("http://localhost:8000/neighborhoods")
-            .then(response => response.json())
-            .then((data) => {
-                //Builds a map for easy access to neighborhood name
-                for (let i=0; i<data.length; i++){
-                    this.neighborhoods.set(data[i].neighborhood_number, data[i].neighborhood_name);
-                }
-            });
-
-
-            fetch("http://localhost:8000/codes")
-            .then(response => response.json())
-            .then((data) => {
-                for (let i=0; i<data.length; i++){
-                    this.codes.set(data[i].code, data[i].incident_type);
-                }
-            });
-
-            fetch("http://localhost:8000/incidents")
-            .then(response => response.json())
-            .then((data) => {
-                this.incidents = data;
-                let nbh_num = 0;
-                //Janky but functional way to add neighborhood name and incident type to incidents array
-                for (let i=0; i<this.incidents.length; i++){
-                    nbh_num  = this.incidents[i].neighborhood_number;
-                    crimes_per_nbhood[nbh_num]++;
-                    this.incidents[i].neighborhood_name = this.neighborhoods.get(this.incidents[i].neighborhood_number);
-                    this.incidents[i].incident_type = this.codes.get(this.incidents[i].code);
-                }
-                //Need a delay otherwise will get errors
-                this.is_loaded = true;
-                flag = 1;
-            });
-
+            let nbh_num_all = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17];
+            this.fetchNewCrime(this.limit, nbh_num_all);
            
         },
         //To call methods outside vue instance: app.updateMapLtLn(params)
@@ -106,6 +197,8 @@ function init() {
                 .then((data) => {
                     this.address = data.display_name;
                     onMapUpdate(this.lat, this.lon);
+                }).catch(function(error) {
+                    console.log(error);
                 });
             },
             updateMapAddr(address) {
@@ -122,6 +215,8 @@ function init() {
                     this.lat = data[0].lat;
                     this.lon = data[0].lon;
                     onMapUpdate(this.lat, this.lon);
+                }).catch(function(error) {
+                    console.log(error);
                 });
             },
             changeLat(lat, increment) {
@@ -131,11 +226,98 @@ function init() {
             changeLon(lon, increment) {
                 var latlng = L.latLng(this.lat, lon + 0.01 * increment);
                 map.panTo(latlng);
+            },
+            fetchNewCrime(limit, nbh_num_arr){
+                this.is_loaded = false;
+                flag = 0;
+
+                //let qry = "http://localhost:8000/neighborhoods?id=";
+
+                //console.log("qry: " + qry);
+                fetch("http://localhost:8000/neighborhoods")
+                .then(response => response.json())
+                .then((data) => {
+                    //Builds a map for easy access to neighborhood name
+                    for (let i=0; i<data.length; i++){
+                        this.neighborhoods.set(data[i].neighborhood_number, data[i].neighborhood_name);
+                    }
+                }).catch(function(error) {
+                    console.log(error);
+                });
+    
+    
+                fetch("http://localhost:8000/codes")
+                .then(response => response.json())
+                .then((data) => {
+                    for (let i=0; i<data.length; i++){
+                        this.codes.set(data[i].code, data[i].incident_type);
+                    }
+                }).catch(function(error) {
+                    console.log(error);
+                });
+
+                /* Append all selected form values to query to incidents for table build */
+                let flg = 0;         
+                let qry = "http://localhost:8000/incidents?";
+                if (nbh_num_arr.length > 0){
+                    qry += "neighborhood=";
+                    for(let i=0; i<nbh_num_arr.length; i++){
+                        qry += nbh_num_arr[i] + ",";
+                    }
+                    flg = 1;
+                }
+                if (this.startdate != 0){
+                    if (flg){qry += "&";}
+                    qry+= "start_date=" + this.startdate;
+                    flg = 1;
+                }
+                if (this.enddate != 0){
+                    qry+= "&end_date="+ this.enddate;
+                }
+                 
+                if (flg){qry += "&";}
+                qry += "limit=" + limit;
+                console.log(qry);
+                fetch(qry)
+                .then(response => response.json())
+                .then((data) => {
+                    this.incidents = data;
+                    let nbh_num = 0;
+                    //Janky but functional way to add neighborhood name and incident type to incidents array
+                    for (let i=0; i<this.incidents.length; i++){
+                        nbh_num  = this.incidents[i].neighborhood_number;
+                        crimes_per_nbhood[nbh_num]++;
+                        this.incidents[i].neighborhood_name = this.neighborhoods.get(this.incidents[i].neighborhood_number);
+                        this.incidents[i].incident_type = this.codes.get(this.incidents[i].code);
+                    }
+                    //reset all selected
+                    this.selected_nbh_name = new Array();
+                    //Need a delay otherwise will get errors
+                    this.is_loaded = true;
+                    flag = 1;
+                }).catch(function(error) {
+                    console.log(error);
+                });
+            },
+            selectNbhNum(idx){
+                console.log(this.selected_nbh_name);
+                let index = this.selected_nbh_name.indexOf(idx);
+                if (index >= 0) {
+                    this.selected_nbh_name.splice( index, 1 );
+                }else{
+                    this.selected_nbh_name.push(idx);
+                }
+            },
+            clickedFinishedSD: function(value){
+                console.log('start date: ', value);
+                this.startdate = value;
+            },
+            clickedFinishedED: function(value){
+                console.log('end date: ', value);
+                this.enddate = value;
             }
         },
-/*  - Buttons changeLat and changeLon are not implemented yet, they should just increment 
-      lat and lon and then pass them to updateMapLtLn.
-    - v-model.lazy="varname" binds to data vars in vue instance
+/*  - v-model.lazy="varname" binds to data vars in vue instance
     - v-on:click="methodcall()"
     - v-for="item in items" parses through an array, to keep a counter use (items, i) where item was
 */
@@ -158,6 +340,22 @@ function init() {
                     </br>
                     <button v-on:click="updateMapAddr(address)">Find Address</button>
                 </div>
+                <div>
+                    <input size="45" v-model.lazy="limit"/>
+                </div>
+                <div>
+                    <div v-for="(neighborhood, index) in neighborhoods" :key="neighborhood">
+                        <input type="checkbox" v-on:click="selectNbhNum(index+1)">
+                        <label>{{neighborhoods.get(index + 1)}}</label>
+                    </div>
+                </div>
+                <h2>Select Start Date</h2>
+                <select-date-component :date="startdate" @clicked-finished-date="clickedFinishedSD"></select-date-component>
+                <h2>Select End Date</h2>
+                <select-date-component :date="enddate" @clicked-finished-date="clickedFinishedED"></select-date-component>
+                </br>
+                <button v-on:click="fetchNewCrime(limit, selected_nbh_name)">Submit Crime Query</button>
+                </br>
                 <table style="clear:left">
                     <tr>
                         <th>Number</th>
@@ -169,7 +367,7 @@ function init() {
                     </tr>
                     <tr v-for="(incident, i) in incidents" :key="i">
                         <td>{{i + 1}}<td>
-                        <td>{{incidents[i].date.replaceAll("-", ", ")}}</td>
+                        <td>{{incidents[i].date}}</td>
                         <td>{{incidents[i].time}}</td>
                         <td>{{incidents[i].incident}}</td>
                         <td>{{incidents[i].incident_type}}</td>

@@ -5,7 +5,7 @@ let path = require('path');
 let express = require('express');
 let sqlite3 = require('sqlite3');
 const { resolve } = require('path');
-
+//console.log("express: ",express);
 
 let app = express();
 let port = 8000;
@@ -172,6 +172,11 @@ app.get('/incidents', (req, res) => {
     query += ' ORDER BY DATE DESC, TIME DESC';
     //LIMIT
     if (limit != null){
+        if (limit>1000){
+            limit=1000;
+        }else if(limit<1){
+            limit=1;
+        }
         query += ' LIMIT ?';
         params.push(limit);
     }else {
