@@ -165,6 +165,7 @@ function init() {
             limit: 1000,
             startdate: 0,
             enddate: 0,
+            markers: {},
 
             map: {
                 center: {
@@ -226,6 +227,59 @@ function init() {
             changeLon(lon, increment) {
                 var latlng = L.latLng(this.lat, lon + 0.01 * increment);
                 map.panTo(latlng);
+            },
+            addTableMarker(incident) {
+                //First, format address and replace Xs in Street Number with 0s
+                let address = '';
+                let block = incident.block.split(' ');
+                block[0] = block[0].replace("X","0");
+                for (let i=0; i<block.length; i++) {
+                    if (block[i] === 'PA') {
+                        block[i] = 'Parkway';
+                    }
+                    else if (block[i] === 'PL') {
+                        block[i] = 'Place';
+                    }
+                    else if (block[i] === 'AV') {
+                        block[i] = 'Avenue';
+                    }
+                    else if (block[i] === 'BD') {
+                        block[i] = 'Boulevard';
+                    }
+                    else if (block[i] === 'RD') {
+                        block[i] = 'Road';
+                    }
+                    address = address + ' ' + block[i];
+                }
+                address = address + ', St. Paul, Minnesota'
+                //Convert address to latitude and longitude
+                fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + address)
+                .then(response => response.json())
+                .then((data) => {
+                    //Custom marker
+                    var myIcon = new L.Icon({
+                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34],
+                        shadowSize: [41, 41]
+                    });
+                    //Create marker
+                    var marker = new L.Marker([data[0].lat, data[0].lon], {icon: myIcon});
+
+                    //Create delete button and text, put in popup, and add to map
+                    let button = $('<button>Delete</button>').click(function() {
+                        map.removeLayer(marker);
+                    });
+                    let inc = '<div><b>Incident: </b>' + incident.incident + '<br><b>Date: </b>' + incident.date + '</br><b>Time: </b>' + incident.time + '</div>';
+                    let div = $('<div />').append(inc).append(button)[0];
+                    marker.bindPopup(div);
+                    marker.addTo(map);
+
+                }).catch(function(error) {
+                    console.log("Error, cannot find address; " + error);
+                });
             },
             fetchNewCrime(limit, nbh_num_arr){
                 this.is_loaded = false;
@@ -370,6 +424,7 @@ function init() {
                 </div>
                 <table style="clear:left">
                     <tr>
+                        <th>Add to Map</th>
                         <th>Number</th>
                         <th>Date</th>
                         <th>Time</th>
@@ -381,6 +436,9 @@ function init() {
                     violentCrime: ['Rape', 'Agg. Assault Dom.', 'Agg. Assault','Arson', 'Simple Asasult Dom.'].indexOf(incidents[i].incident) >= 0, 
                     propertyCrime: ['Theft', 'Burglary', 'Vandalism', 'Robbery', 'Auto Theft',].indexOf(incidents[i].incident) >= 0, 
                     otherCrime: ['Narcotics', 'Proactive Police Visit', 'Discharge', 'Community Engagement Event', 'Graffiti'].indexOf(incidents[i].incident) >= 0}">
+                        <td>
+                            <button v-on:click="addTableMarker(incidents[i])">Add</button>
+                        </td>
                         <td>{{i + 1}}</td>
                         <td>{{incidents[i].date}}</td>
                         <td>{{incidents[i].time}}</td>
