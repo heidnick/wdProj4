@@ -21,9 +21,7 @@ margin-left: 2rem;
 body{
 background-color:grey;
 }
-.demo{
 
-}
 .things{
 border-style:double;
 border-color:black;
@@ -45,10 +43,33 @@ width: 15rem;
 }
 iframe { 
 width: 500px;
-height: 500px: 
+height: 500px;
 margin-left: auto; 
 margin-right: auto; 
 }
 p{
 text-align: center;
+}
+th {
+    padding: 10px;
+    background-color: lightslategray;
+}
+td {
+    padding: 10px;
+    text-align: center;
+}
+table {
+    border-collapse: collapse;
+  }
+table, th, td {
+    border: 1px solid black;
+}
+.violentCrime {
+    background-color: red;
+}
+.propertyCrime {
+    background-color: blue;
+}
+.otherCrime {
+    background-color: lightblue;
 }

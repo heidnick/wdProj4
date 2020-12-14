@@ -356,6 +356,18 @@ function init() {
                 </br>
                 <button v-on:click="fetchNewCrime(limit, selected_nbh_name)">Submit Crime Query</button>
                 </br>
+                <div style="float: right; margin-right: 5%; padding: 35px; border: 1px solid black;">
+                    <b>Legend:</b>
+                    <br>
+                    <br>
+                    Violent Crimes: <div style="background-color: red; padding: 6px;"></div>
+                    <br>
+                    <br>
+                    Property Crimes: <div style="background-color: blue; padding: 6px;"></div>
+                    <br>
+                    <br>
+                    Other Crimes: <div style="background-color: lightblue; padding: 6px;"></div>
+                </div>
                 <table style="clear:left">
                     <tr>
                         <th>Number</th>
@@ -365,8 +377,11 @@ function init() {
                         <th>Incident Desc.</th>
                         <th>Neighborhood Name</th>
                     </tr>
-                    <tr v-for="(incident, i) in incidents" :key="i">
-                        <td>{{i + 1}}<td>
+                    <tr v-for="(incident, i) in incidents" :key="i" v-bind:class="{ 
+                    violentCrime: ['Rape', 'Agg. Assault Dom.', 'Agg. Assault','Arson', 'Simple Asasult Dom.'].indexOf(incidents[i].incident) >= 0, 
+                    propertyCrime: ['Theft', 'Burglary', 'Vandalism', 'Robbery', 'Auto Theft',].indexOf(incidents[i].incident) >= 0, 
+                    otherCrime: ['Narcotics', 'Proactive Police Visit', 'Discharge', 'Community Engagement Event', 'Graffiti'].indexOf(incidents[i].incident) >= 0}">
+                        <td>{{i + 1}}</td>
                         <td>{{incidents[i].date}}</td>
                         <td>{{incidents[i].time}}</td>
                         <td>{{incidents[i].incident}}</td>
