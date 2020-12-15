@@ -93,48 +93,54 @@ Vue.component('select-date-component', {
     },
     template: `
         <div>
-            <label>Select Year</label>
+            <label>Year:</label>
             <select v-model="year" @change="showDays()">
                 <option v-for="num in years">{{num}}</option>
             </select>
-            <label>Select Month</label>
+            <label>Month:</label>
             <select v-model="month" @change="showDays()">
                 <option v-for="num in 12">{{num}}</option>
             </select>
-            <label>Select Day</label>
-            <div v-if="lp_feb_flg">
-                <select>
-                    <option v-for="i in 29" v-model="day">{{i}}</option>
-                </select>
-            </div>    
-            <div v-else-if="feb_flg">
-                <select v-model="day">
-                    <option v-for="i in 28" v-model="day">{{i}}</option>
-                </select>
+            <label>Day:</label>
+            <div style="display: inline-block;">
+                <div v-if="lp_feb_flg">
+                    <select>
+                        <option v-for="i in 29" v-model="day">{{i}}</option>
+                    </select>
+                </div>
+                <div v-else-if="feb_flg">
+                    <select v-model="day">
+                        <option v-for="i in 28" v-model="day">{{i}}</option>
+                    </select>
+                </div>
+                <div v-else-if="bigm_flg">
+                    <select v-model="day">
+                        <option v-for="i in 31">{{i}}</option>
+                    </select>
+                </div>
+                <div v-else>
+                    <select v-model="day">
+                        <option v-for="i in 30">{{i}}</option>
+                    </select>
+                </div>
             </div>
-            <div v-else-if="bigm_flg">
-                <select v-model="day">
-                    <option v-for="i in 31">{{i}}</option>
-                </select>
-            </div>
-            <div v-else>
-                <select v-model="day">
-                    <option v-for="i in 30">{{i}}</option>
-                </select>
-            </div>
-            <label>Select Hour</label>
+            <label>Hour:</label>
             <select v-model="hour">
                 <option v-for="num in 24">{{num - 1}}</option>
             </select>
-            <label>Select Minute</label>
+            <label>Minute:</label>
             <select v-model="min">
                 <option v-for="num in 60">{{num - 1}}</option>
             </select>
-            <label>Select Seconds</label>
+            <label>Seconds:</label>
             <select  v-model="sec">
                 <option v-for="num in 60">{{num - 1}}</option>
             </select>
-            <button  v-on:click="packDate(year, month, day, hour, min, sec)">Finished Picking Date</button>
+            </br>
+            </br>
+            <button style="display:block" type="button" class="btn btn-secondary" v-on:click="packDate(year, month, day, hour, min, sec)">Submit Date</button>
+            </br>
+            </br>
         </div>
     `
 });
@@ -165,7 +171,6 @@ function init() {
             limit: 1000,
             startdate: 0,
             enddate: 0,
-            markers: {},
 
             map: {
                 center: {
@@ -377,40 +382,47 @@ function init() {
 */
         template: `
             <div v-if="this.is_loaded">
-                <div style="float:left; padding-left: 3rem; padding-top: 2rem;">
-                    <p>Lat: </p>
-                    <button v-on:click="changeLat(lat,-1)">-</button>
-                    <button v-on:click="changeLat(lat,1)">+</button>
+                <div style="float:left; margin-left: 5%; padding: 20px; border: 1px solid black;">
+                    <h5>Latitude: </h5>
+                    <button type="button" class="btn btn-outline-primary" v-on:click="changeLat(lat,-1)">-</button>
+                    <button type="button" class="btn btn-outline-primary" v-on:click="changeLat(lat,1)">+</button>
                     <input v-model.lazy="lat"/>
-                    <p>Lon: </p>
-                    <button v-on:click="changeLon(lon,-1)">-</button>
-                    <button v-on:click="changeLon(lon,1)">+</button>
+                    <h5>Longitude: </h5>
+                    <button type="button" class="btn btn-outline-primary" v-on:click="changeLon(lon,-1)">-</button>
+                    <button type="button" class="btn btn-outline-primary" v-on:click="changeLon(lon,1)">+</button>
                     <input v-model.lazy="lon"/>
-                    </br>
-                    <button v-on:click="updateMapLtLn(lat, lon)">Find Lat/Lng</button>
-                    </br>
-                    <p> Address: </p>
-                    <input size="45" v-model.lazy="address"/>
-                    </br>
-                    <button v-on:click="updateMapAddr(address)">Find Address</button>
+                    <button type="button" class="btn btn-primary" v-on:click="updateMapLtLn(lat, lon)">Find Lat/Lng</button>
+                    <h5 style="margin-top: 3px"> Address: </h5>
+                    <input size="35" v-model.lazy="address"/>
+                    <button type="button" class="btn btn-primary" v-on:click="updateMapAddr(address)">Find Address</button>
                 </div>
-                <div>
-                    <input size="45" v-model.lazy="limit"/>
-                </div>
-                <div>
-                    <div v-for="(neighborhood, index) in neighborhoods" :key="neighborhood">
-                        <input type="checkbox" v-on:click="selectNbhNum(index+1)">
-                        <label>{{neighborhoods.get(index + 1)}}</label>
+                <div style=" padding: 20px; margin: 1%; border: 1px solid black; clear:left" class="container">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <h3>Crime Filters:</h3>
+                            <div>
+                                <b>Neighborhoods:</b>
+                                <div v-for="(neighborhood, index) in neighborhoods" :key="neighborhood">
+                                    <input type="checkbox" v-on:click="selectNbhNum(index+1)">
+                                    <label>{{neighborhoods.get(index + 1)}}</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <h5>Start Date:</h5>
+                            <select-date-component :date="startdate" @clicked-finished-date="clickedFinishedSD"></select-date-component>
+                            <h5>End Date:</h5>
+                            <select-date-component :date="enddate" @clicked-finished-date="clickedFinishedED"></select-date-component>
+                            <div>
+                                <b>Number of Incidents: </b><input size="10" v-model.lazy="limit"/> (max: 1000) 
+                            </div>
+                            </br>
+                            </br>
+                            <button type="button" class="btn btn-primary btn-lg" v-on:click="fetchNewCrime(limit, selected_nbh_name)">Submit Crime Query</button>
+                        </div>
                     </div>
                 </div>
-                <h2>Select Start Date</h2>
-                <select-date-component :date="startdate" @clicked-finished-date="clickedFinishedSD"></select-date-component>
-                <h2>Select End Date</h2>
-                <select-date-component :date="enddate" @clicked-finished-date="clickedFinishedED"></select-date-component>
-                </br>
-                <button v-on:click="fetchNewCrime(limit, selected_nbh_name)">Submit Crime Query</button>
-                </br>
-                <div style="float: right; margin-right: 5%; padding: 35px; border: 1px solid black;">
+                <div style="float: right; margin-right: 5%; margin-left: 20px; padding: 35px; padding-top:25px; border: 1px solid black;">
                     <b>Legend:</b>
                     <br>
                     <br>
@@ -420,10 +432,10 @@ function init() {
                     Property Crimes: <div style="background-color: blue; padding: 6px;"></div>
                     <br>
                     <br>
-                    Other Crimes: <div style="background-color: lightblue; padding: 6px;"></div>
+                    Other Crimes: <div style="background-color: skyblue; padding: 6px;"></div>
                 </div>
-                <table style="clear:left">
-                    <tr>
+                <table style="clear:left; margin-left: 20px">
+                    <tr style="text-align: center">
                         <th>Add to Map</th>
                         <th>Number</th>
                         <th>Date</th>
@@ -433,11 +445,11 @@ function init() {
                         <th>Neighborhood Name</th>
                     </tr>
                     <tr v-for="(incident, i) in incidents" :key="i" v-bind:class="{ 
-                    violentCrime: ['Rape', 'Agg. Assault Dom.', 'Agg. Assault','Arson', 'Simple Asasult Dom.'].indexOf(incidents[i].incident) >= 0, 
-                    propertyCrime: ['Theft', 'Burglary', 'Vandalism', 'Robbery', 'Auto Theft',].indexOf(incidents[i].incident) >= 0, 
-                    otherCrime: ['Narcotics', 'Proactive Police Visit', 'Discharge', 'Community Engagement Event', 'Graffiti'].indexOf(incidents[i].incident) >= 0}">
+                    violentCrime: ['Rape','Homicide', 'Agg. Assault Dom.', 'Agg. Assault','Arson', 'Simple Asasult Dom.'].indexOf(incidents[i].incident) >= 0, 
+                    propertyCrime: ['Theft', 'Burglary', 'Vandalism', 'Robbery', 'Auto Theft'].indexOf(incidents[i].incident) >= 0, 
+                    otherCrime: ['Rape','Homicide', 'Agg. Assault Dom.', 'Agg. Assault','Arson', 'Simple Asasult Dom.','Theft', 'Burglary', 'Vandalism', 'Robbery', 'Auto Theft'].indexOf(incidents[i].incident) < 0}">
                         <td>
-                            <button v-on:click="addTableMarker(incidents[i])">Add</button>
+                            <button type="button" class="btn btn-outline-light" v-on:click="addTableMarker(incidents[i])">Add</button>
                         </td>
                         <td>{{i + 1}}</td>
                         <td>{{incidents[i].date}}</td>

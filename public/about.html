@@ -1,46 +1,75 @@
 <!DOCTYPE html>
 <html>
     <link rel ="stylesheet" href = "css/style.css"/>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
+    <!-- End: Bootstrap -->
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>About</title>
-    <h1 style="font-size:8rem">About page</h1>
 </head>
 <body>
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">St. Paul Crime Map</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarText">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link" aria-current="page" href="http://localhost:8000/index.html">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="http://localhost:8000/about.html">About</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+</nav>
 
 <div class="section">
     <h1 style="font-size: 4rem">James</h1>
     <p>
-        does drugs
+        Senior studying Computer Science at the University of St Thomas.
+        <br>
+        From St. Anthony, Minnesota
+        <br>
     </p>
-    <img styles="width:15rem" src="j.png" alt="james">
+    <img style="width:15rem" src="photos/j.jpg" alt="james">
 
     <h1 style="font-size: 4rem">Nick</h1>
     <p>
         drinks alot
     </p>
-    <img styles="width:15rem" src="n.jpg" alt="nick">
+    <img styles="width:15rem" src="photos/n.jpg" alt="nick">
     
 
     <h1 style="font-size: 4rem">Oliver</h1>
     <p>
         steals cars
     </p>
-    <img  styles="width:15rem" src="o.jpg" alt="Oliver">
+    <img  styles="width:15rem" src="photos/o.jpg" alt="Oliver">
 
 </div>
 
 <div class="section">
 <p4>
     <h2 style="font-size: 2rem">Description of tools:</h2>
-    tools framework framed tooled frames tool tooly tool tools framed tools
-    tools framework framed tooled frames tool tooly tool tools framed tools
-    tools framework framed tooled frames tool tooly tool tools framed tools
-    tools framework framed tooled frames tool tooly tool tools framed tools
-    tools framework framed tooled frames tool tooly tool tools framed tools
-    tools framework framed tooled frames tool tooly tool tools framed tools
-    tools framework framed tooled frames tool tooly tool tools framed tools
+        <h4 style="text-align: center;">APIs Used:</h4>
+            <ul class="list-group">
+                <li class="list-group-item"><b>Leaflet:</b> Javascript library used to build the interactive map with zooming, panning, markers, etc.</li>
+                <li class="list-group-item"><b>Nominatim:</b> Tool used to convert addresses to latitude and longitude, and vice versa.</li>
+                <li class="list-group-item"><b>St. Paul Crime API:</b> RESTful server used to query information from the St. Paul Crime database.</li>
+            </ul>
+        <h4 style="text-align: center; margin-top: 5px;">Frameworks Used:</h4>
+            <ul class="list-group">
+                <li class="list-group-item"><b>Bootstrap:</b> Widely used, frontend framework used for layout and styling for headers, tables, buttons, etc.</li>
+            </ul>
 
 </p4>
 </div>
@@ -56,13 +85,14 @@
 <div class="section">
 <p6>
     <h4 style="font-size: 2rem">Interesting things discovered:</h4>
-    robert robbed roberto with a robot named robobro robert robbed roberto with a robot named robobro
-    robert robbed roberto with a robot named robobrorobert robbed roberto with a robot named robobro
-    robert robbed roberto with a robot named robobrorobert robbed roberto with a robot named robobro
-    robert robbed roberto with a robot named robobrorobert robbed roberto with a robot named robobro
-    robert robbed roberto with a robot named robobrorobert robbed roberto with a robot named robobro
-    robert robbed roberto with a robot named robobrorobert robbed roberto with a robot named robobro
-    robert robbed roberto with a robot named robobrorobert robbed roberto with a robot named robobro
+    <ul class="list-group">
+        <li class="list-group-item"><b>1:</b> From 2014 - 2020, there has been a big increase in the number of proactive police visits. It's good that police are more often trying to stop crime before it happens.</li>
+        <li class="list-group-item"><b>2:</b> Another interesting find</li>
+        <li class="list-group-item"><b>3:</b> Another interesting find</li>
+        <li class="list-group-item"><b>4:</b> Another interesting find</li>
+        <li class="list-group-item"><b>5:</b> Another interesting find</li>
+        <li class="list-group-item"><b>6:</b> Another interesting find</li>
+    </ul>
 </p6>
 </div>
 
