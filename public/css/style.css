@@ -60,9 +60,11 @@ td {
 }
 .violentCrime {
     background-color: red;
+    color: white;
 }
 .propertyCrime {
     background-color: blue;
+    color: white;
 }
 .otherCrime {
     background-color: skyblue;

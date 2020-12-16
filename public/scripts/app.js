@@ -45,10 +45,10 @@ Vue.component('select-date-component', {
     props: ['date'],
     methods: {
         showDays: function(year, month){
-            console.log('this.months: ' + this.month);
+            //console.log('this.months: ' + this.month);
             if((this.year == 2020 || this.year == 2016) && this.month == 2){
                 this.lp_feb_flg = 1;
-                console.log('lp_feb_flg');
+                //console.log('lp_feb_flg');
             }else if(this.month == 2){
                 this.lp_feb_flg = 0;
                 this.bigm_flag = 0;
@@ -57,15 +57,15 @@ Vue.component('select-date-component', {
                 this.feb_flg = 0;
                 this.lp_feb_flg = 0;
                 this.bigm_flg = 1;
-                console.log('hits big case');
+                //console.log('hits big case');
             }else{
                 this.lp_feb_flg = 0;
                 this.feb_flg = 0;
                 this.bigm_flg = 0;
             }
-            console.log('leap', this.lp_feb_flg);
-            console.log('big', this.bigm_flg);
-            console.log('feb', this.feb_flg);
+            //console.log('leap', this.lp_feb_flg);
+            //console.log('big', this.bigm_flg);
+            //console.log('feb', this.feb_flg);
         },
         packDate: function(year, month, day, hour, min, sec){
             this.date = year + "-";
@@ -158,19 +158,23 @@ function init() {
 /*-----------Declare variables here------------
     for inside vue access: this.variablename
     outside vue access: this._data.variablename
-*/            
+*/        
             is_loaded:false,
             incidents: [],
-            incident_types: new Map(),
+            incident_types: [],
+            selected_incident_types: [],
             neighborhoods: new Map(),
             selected_nbh_name: [],
             codes: new Map(),
             lat: 44.955139,
             lon: -93.102222,
+            searched_address: "",
             address: "",
             limit: 1000,
             startdate: 0,
             enddate: 0,
+            canPanMap: 1,
+            address_flag: 0,
 
             map: {
                 center: {
@@ -195,6 +199,7 @@ function init() {
         //To call methods outside vue instance: app.updateMapLtLn(params)
         methods: {
             updateMapLtLn(lat, lon) {
+                this.canPanMap = 0;
                 console.log('updateMapLtLn called');
                 lat = clamp(lat, this.map.bounds.se.lat, this.map.bounds.nw.lat);
                 lon = clamp(lon, this.map.bounds.se.lng, this.map.bounds.nw.lng);
@@ -208,18 +213,28 @@ function init() {
                 });
             },
             updateMapAddr(address) {
+                this.canPanMap = 0;
                 //Tests for input: 44.955139, -93.102222
                 //Pelham Boulevard, Saint Paul, Ramsey County, Minnesota, 55104, United States of America
                 console.log('update Map Addr called: ' + address);
                 fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + address)
                 .then(response => response.json())
                 .then((data) => {
-                    /*while(1){
-                        if (data[0])
-                    }*/
-                    this.address = data[0].display_name;
-                    this.lat = data[0].lat;
-                    this.lon = data[0].lon;
+                    console.log(data);
+                    for(let i = 0; i<data.length; i++){
+                        if (data[i].display_name.includes(address)){
+                            this.address = data[i].display_name;
+                            this.lat = data[i].lat;
+                            this.lon = data[i].lon;
+                        }else if(data[i].display_name.includes('St Paul')){
+                            this.address = data[i].display_name;
+                            this.lat = data[i].lat;
+                            this.lon = data[i].lon;
+                        }else{
+                            this.address_flag = 1;
+                        }
+                    }
+
                     onMapUpdate(this.lat, this.lon);
                 }).catch(function(error) {
                     console.log(error);
@@ -333,6 +348,15 @@ function init() {
                 if (this.enddate != 0){
                     qry+= "&end_date="+ this.enddate;
                 }
+                if (this.selected_incident_types.length > 0){
+                    if (flg){qry+='&'}
+                    qry+='incident=';
+                    for(let i=0; i<this.selected_incident_types.length; i++){
+                        qry += this.selected_incident_types[i] + ",";
+                    }
+                    qry = qry.substring(0, qry.length - 1);
+                    flg=1;
+                }
                  
                 if (flg){qry += "&";}
                 qry += "limit=" + limit;
@@ -348,8 +372,13 @@ function init() {
                         crimes_per_nbhood[nbh_num]++;
                         this.incidents[i].neighborhood_name = this.neighborhoods.get(this.incidents[i].neighborhood_number);
                         this.incidents[i].incident_type = this.codes.get(this.incidents[i].code);
+                        let idx = this.incident_types.indexOf(this.incidents[i].incident);
+                        if (idx == -1){
+                            this.incident_types.push(data[i].incident);
+                        }
                     }
                     //reset all selected
+                    this.selected_incident_types = new Array();
                     this.selected_nbh_name = new Array();
                     //Need a delay otherwise will get errors
                     this.is_loaded = true;
@@ -368,21 +397,38 @@ function init() {
                 }
             },
             clickedFinishedSD: function(value){
-                console.log('start date: ', value);
+                //console.log('start date: ', value);
                 this.startdate = value;
             },
             clickedFinishedED: function(value){
-                console.log('end date: ', value);
+                //console.log('end date: ', value);
                 this.enddate = value;
+            },
+            selectIncidentType(i){
+                console.log('selectIncidentType: ' + this.incident_types[i]);
+                let index = this.selected_incident_types.indexOf(this.incident_types[i]);
+                if (index >= 0) {
+                    this.selected_incident_types.splice( index, 1 );
+                }else{
+                    this.selected_incident_types.push(this.incident_types[i]);
+                }
+            },
+            toggleMapPan(){
+                this.canPanMap = !this.canPanMap;
+                console.log("toggle: " + this.canPanMap);
             }
         },
 /*  - v-model.lazy="varname" binds to data vars in vue instance
     - v-on:click="methodcall()"
     - v-for="item in items" parses through an array, to keep a counter use (items, i) where item was
+
+    // style="float:left; margin-left: 5%; padding: 20px; border: 1px solid black;
 */
         template: `
             <div v-if="this.is_loaded">
                 <div style="float:left; margin-left: 5%; padding: 20px; border: 1px solid black;">
+                    <button v-if="canPanMap" type="button" class="btn btn-success" v-on:click="toggleMapPan()">Map Pan Enabled</button>
+                    <button v-else type="button" class="btn btn-danger" v-on:click="toggleMapPan()">Map Pan Disabled</button>
                     <h5>Latitude: </h5>
                     <button type="button" class="btn btn-outline-primary" v-on:click="changeLat(lat,-1)">-</button>
                     <button type="button" class="btn btn-outline-primary" v-on:click="changeLat(lat,1)">+</button>
@@ -393,12 +439,18 @@ function init() {
                     <input v-model.lazy="lon"/>
                     <button type="button" class="btn btn-primary" v-on:click="updateMapLtLn(lat, lon)">Find Lat/Lng</button>
                     <h5 style="margin-top: 3px"> Address: </h5>
-                    <input size="35" v-model.lazy="address"/>
+                    <input size="50" v-model.lazy="address"/>
                     <button type="button" class="btn btn-primary" v-on:click="updateMapAddr(address)">Find Address</button>
+                </div>
+                <div style="margin: 1%; clear:left" class="container">
+                    <div class="row">
+                        <div class="col-sm-6">
+                                                    </div> 
+                    </div>
                 </div>
                 <div style=" padding: 20px; margin: 1%; border: 1px solid black; clear:left" class="container">
                     <div class="row">
-                        <div class="col-sm-6">
+                        <div class="col-sm-4">
                             <h3>Crime Filters:</h3>
                             <div>
                                 <b>Neighborhoods:</b>
@@ -408,7 +460,16 @@ function init() {
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-6">
+                        <div class="col-sm-4">
+                            <div>
+                                <b>Incidents:</b>
+                                <div v-for="(incident,i) in incident_types">
+                                    <input type="checkbox" v-on:click="selectIncidentType(i)">
+                                    <label>{{incident_types[i]}}</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
                             <h5>Start Date:</h5>
                             <select-date-component :date="startdate" @clicked-finished-date="clickedFinishedSD"></select-date-component>
                             <h5>End Date:</h5>
@@ -509,32 +570,45 @@ function init() {
     }
 
     function onMapMoveend() {
-        app._data.lat = map.getCenter().lat;
-        app._data.lon = map.getCenter().lng;
+        if (app._data.canPanMap == 1){      
+            app._data.lat = map.getCenter().lat;
+            app._data.lon = map.getCenter().lng;
+            
+            getJSON('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + map.getCenter().lat + '&lon=' + map.getCenter().lng).then((result) => {
+                //Get address from result
+                app._data.address = result.display_name;
 
-        getJSON('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + map.getCenter().lat + '&lon=' + map.getCenter().lng).then((result) => {
-            //Get address from result
-            app._data.address = result.display_name;
-
-        }).catch((error) => {
-            console.log('Error:', error);
-        });
+            }).catch((error) => {
+                console.log('Error:', error);
+            });
+        }
     }
 
 //Testing input
 //Pelham Boulevard, Saint Paul, Ramsey County, Minnesota, 55104, United States of America
+//1300 University Ave W
     function onMapUpdate(lat, lon){
         lat = clamp(lat, 44.883658, 45.008206);
         lon = clamp(lon, -93.217977, -92.993787);
-        
+        console.log('onmapupdate called');
         app._data.lat = lat;
         app._data.lon = lon;
         //Pan map
         var latlng = L.latLng(lat, lon);
+        map.zoomIn(1);
         map.panTo(latlng);
     }
 
+    function chooseUpdateMethod(){
+        if (new_loc_flag){
+            new_loc_flag = 0;
+        }else{
+            onMapMoveend();
+        }
+    }
+
     //map.on('click', onMapClick);
+    //map.on('moveend', chooseUpdateMethod);
     map.on('moveend', onMapMoveend);
     
 }

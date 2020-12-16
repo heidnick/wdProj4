@@ -107,6 +107,7 @@ app.get('/incidents', (req, res) => {
     let grid = url.searchParams.get('grid');
     let neighborhood = url.searchParams.get('neighborhood');
     let limit = url.searchParams.get('limit');
+    let incident = url.searchParams.get('incident');
     //let query = 'SELECT * FROM Incidents';
     let query = `select case_number,
                     case when LENGTH(date_time)>0 
@@ -126,6 +127,19 @@ app.get('/incidents', (req, res) => {
         for (let i=0; i<code.length; i++) {
             query = query + '?,';
             params.push(code[i]);
+        }
+        query = query.substring(0, query.length - 1);
+        query = query + ')';
+    }
+    //Incident
+    if (incident != null){
+        console.log("incident: ",incident)
+        flag = 1;
+        incident = incident.split(',');
+        query = query + ' WHERE incident IN ('
+        for (let i=0; i<incident.length; i++) {
+            query = query + '?,';
+            params.push(incident[i]);
         }
         query = query.substring(0, query.length - 1);
         query = query + ')';
@@ -182,7 +196,7 @@ app.get('/incidents', (req, res) => {
     }else {
         query += ' LIMIT 1000';
     }
-
+    //console.log('query: ',query);
     Promise.all([databaseSelect(query, params)]).then((results) => {
         var obj = JSON.stringify(results[0]);
         obj = JSON.stringify(JSON.parse(obj), null, 2);
@@ -219,7 +233,6 @@ app.put('/new-incident', (req, res) => {
             return new Promise((resolve,reject)=>{
                 reject('Incident number already exists');
             });
-
         } else {
             return databaseInsert(query,[caseNumber, ]);
         }
