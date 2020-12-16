@@ -49,6 +49,8 @@ Vue.component('select-date-component', {
     props: ['date'],
     methods: {
         showDays: function(year, month){
+            console.log('showdays ', this.d_flag)
+
             //console.log('this.months: ' + this.month);
             if((this.year == 2020 || this.year == 2016) && this.month == 2){
                 this.lp_feb_flg = 1;
@@ -69,6 +71,9 @@ Vue.component('select-date-component', {
             }
         },
         packDate: function(year, month, day){
+            console.log('packdate ', this.d_flag)
+            console.log('packdate dayval ', this.day)
+
             if (year == 0){
                 this.yr_flag = 1;
                 this.date_flag =1;
@@ -292,7 +297,7 @@ function init() {
                     for (let i=0; i<data.length; i++){
                         this.cb_inc_types.push(data[i].incident);
                     }
-                    console.log(this.cb_inc_types);
+                    //console.log(this.cb_inc_types);
                 }).catch(function(error) {
                     console.log(error);
                 });
@@ -302,38 +307,51 @@ function init() {
         methods: {
             updateMapLtLn(lat, lon) {
                 this.canPanMap = 0;
-                console.log('updateMapLtLn called');
-                lat = clamp(lat, this.map.bounds.se.lat, this.map.bounds.nw.lat);
-                lon = clamp(lon, this.map.bounds.se.lng, this.map.bounds.nw.lng);
+
+                if (lat < this.map.bounds.se.lat || lat > this.map.bounds.nw.lat){
+                    lat = clamp(lat, this.map.bounds.se.lat, this.map.bounds.nw.lat);
+                }
+                if (lon < this.map.bounds.se.lng || lon > this.map.bounds.nw.lng){
+                    lon = clamp(lon, this.map.bounds.se.lng, this.map.bounds.nw.lng);
+                }
+                
+                
                 fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lon)
                 .then(response => response.json())
                 .then((data) => {
                     this.address = data.display_name;
+                    this.lat = data.lat;
+                    this.lon = data.lon;
                     onMapUpdate(this.lat, this.lon);
                 }).catch(function(error) {
                     console.log(error);
                 });
             },
+            //44.962399094997515
+            //-93.03329944610596
+            //Longfellow Humanities Magnet School, Iglehart Avenue, Saint Paul, Ramsey County, Minnesota, 55104, United States
+            //
             updateMapAddr(address) {
                 this.canPanMap = 0;
                 //Tests for input: 44.955139, -93.102222
                 //Pelham Boulevard, Saint Paul, Ramsey County, Minnesota, 55104, United States of America
-                console.log('update Map Addr called: ' + address);
+                //console.log('update Map Addr called: ' + address);
+                address = address.replaceAll(" ", '+');
+                //console.log('address',address)
+                
                 fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + address)
                 .then(response => response.json())
                 .then((data) => {
-                    console.log(data);
-                    for(let i = 0; i<data.length; i++){
-                        if (data[i].display_name.includes(address)){
+                    console.log("data ",data);
+                    let i = 0;
+                    let done=0;
+                    for(let i=0; i<data.length; i++){
+                        if (!done && (data[i].display_name.toString().includes('St Paul') || data[i].display_name.toString().includes('Saint Paul'))){
+                            //console.log('1st case ', i )
                             this.address = data[i].display_name;
                             this.lat = data[i].lat;
                             this.lon = data[i].lon;
-                        }else if(data[i].display_name.includes('St Paul')){
-                            this.address = data[i].display_name;
-                            this.lat = data[i].lat;
-                            this.lon = data[i].lon;
-                        }else{
-                            this.address_flag = 1;
+                            done=1;
                         }
                     }
 
@@ -343,11 +361,15 @@ function init() {
                 });
             },
             changeLat(lat, increment) {
+                lat = parseFloat(lat);
+                //console.log('lat', lat)
                 var latlng = L.latLng(lat + 0.01 * increment, this.lon);
                 map.panTo(latlng);
             },
             changeLon(lon, increment) {
-                var latlng = L.latLng(this.lat, lon + 0.01 * increment);
+                lon = parseFloat(lon);
+                //console.log('lon', lon)
+                latlng = L.latLng(this.lat, lon + 0.01 * increment);
                 map.panTo(latlng);
             },
             addTableMarker(incident) {
@@ -504,7 +526,7 @@ function init() {
                  
                 if (flg){qry += "&";}
                 qry += "limit=" + limit;
-                console.log("outgoing query:",qry);
+                //console.log("outgoing query:",qry);
                 fetch(qry)
                 .then(response => response.json())
                 .then((data) => {
@@ -578,7 +600,7 @@ function init() {
             },
             toggleMapPan(){
                 this.canPanMap = !this.canPanMap;
-                console.log("toggle: " + this.canPanMap);
+                //console.log("toggle: " + this.canPanMap);
             }
         },
 /*  - v-model.lazy="varname" binds to data vars in vue instance
@@ -788,11 +810,13 @@ function init() {
     function onMapMoveend() {
         //console.log('mappan called');
         //console.log(map);
-        if (app._data.canPanMap == 1){      
-            app._data.lat = clamp(map.getCenter().lat, 44.883658, 45.008206);
-            app._data.lon = clamp(map.getCenter().lng, -93.217977, -92.993787);
+        //console.log('onmapmoveend called');
+        //console.log("canpan",app._data.canPanMap)
+        if (app._data.canPanMap == 1){     
+            app._data.lat = map.getCenter().lat;
+            app._data.lon = map.getCenter().lng;
             
-            getJSON('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + clamp(map.getCenter().lat, 44.883658, 45.008206) + '&lon=' + clamp(map.getCenter().lng, -93.217977, -92.993787)).then((result) => {
+            getJSON('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + map.getCenter().lat + '&lon=' + map.getCenter().lng).then((result) => {
                 //Get address from result
                 app._data.address = result.display_name;
 
@@ -807,20 +831,20 @@ function init() {
 //1300 University Ave W
     function onMapUpdate(lat, lon){
         //console.log('onmapupdate called');
-        lat = clamp(lat, 44.883658, 45.008206);
-        lon = clamp(lon, -93.217977, -92.993787);
-        console.log('onmapupdate called');
         app._data.lat = lat;
         app._data.lon = lon;
         //Pan map
-        var latlng = L.latLng(lat, lon);
-        map.zoomIn(1);
+        let latlng = L.latLng(lat, lon);
         map.panTo(latlng);
+        //map.zoomIn(1);
+        
     }
 
     map.on('moveend', onMapMoveend);
     
 }
+
+
 
 function getJSON(url) {
     return new Promise((resolve, reject) => {
