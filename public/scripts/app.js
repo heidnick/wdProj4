@@ -38,10 +38,10 @@ Vue.component('select-date-component', {
             bigm_flg: 0,
             year: 0,
             month: 0,
-            hour: 0,
-            min: 0,
-            sec: 0,
             day: 0,
+            yr_flag: 1,
+            m_flag: 1,
+            d_flag: 1,
             date_flag: 0,
             submitted: 0,     
         }
@@ -67,26 +67,35 @@ Vue.component('select-date-component', {
                 this.feb_flg = 0;
                 this.bigm_flg = 0;
             }
-            //console.log('leap', this.lp_feb_flg);
-            //console.log('big', this.bigm_flg);
-            //console.log('feb', this.feb_flg);
         },
         packDate: function(year, month, day){
-            if (year == 0 || month == 0 || day == 0){
-                this.date_flag = 1;
-            }else{ 
+            if (year == 0){
+                this.yr_flag = 1;
+                this.date_flag =1;
+            }else {this.year = year; this.yr_flag = 0;}
+            if (month == 0) {
+                this.m_flag = 1;
+                this.date_flag =1; 
+            }else {this.month = month; this.m_flag = 0;}
+            if (day == 0){
+                this.d_flag = 1;
+                this.date_flag =1;
+            }else {this.day = day; this.d_flag = 0;}
+
+
+            if (!this.yr_flag && !this.d_flag && !this.m_flag){
                 this.date_flag = 0;
-                 this.date = year + "-";
-                if (month < 10 ){
-                    this.date += "0" + month + "-";
-                }else{this.date+=month+'-';}
-                if (day < 10 ){
-                    this.date += "0" + day;
-                }else{this.date+=day}
-                //console.log('finished date ' + this.date);
+                this.date = this.year + "-";
+                if (this.month < 10 ){
+                    this.date += "0" + this.month + "-";
+                }else{this.date+=this.month+'-';}
+                if (this.day < 10 ){
+                    this.date += "0" + this.day;
+                }else{this.date+=this.day}
                 this.$emit('clicked-finished-date', this.date);
                 this.submitted = 1;
             }
+            //console.log(this.date);
         }
     },
     template: `
@@ -122,14 +131,27 @@ Vue.component('select-date-component', {
                     </select>
                 </div>
             </div>
-            <div v-if="date_flag">
-                <b style="color: red;">You must select all fields</b>
+            <div v-if="date_flag" style="color: red; font-weight:bold; margin: 0 0;">
+                <p style="margin: 0 0; text-align: left; text-decoration: underline;"><span>You must select:</span></p>
+                <ul style="margin: 0 0;">
+                    <li v-if="yr_flag">Year</li>
+                    <li v-if="m_flag">Month</li>
+                    <li v-if="d_flag">Day</li>
+                </ul>
             </div>
-            </br>
-            </br>
-            <button style="display:block" type="button" class="btn btn-secondary" v-on:click="packDate(year, month, day, hour, min, sec)">Submit Date</button>
+            <div v-if="!date_flag" style="margin: 0 0;">
+                </br>
+            </div>
             <div v-if="submitted">
-                <b style="color: Green;">Date submitted</d>
+                <p style="margin: 0 0; text-align: left; font-weight: bold; color: green;"><span>Date Submitted</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" color="green" width="16" height="16" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path fill-rule="evenodd" d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.236.236 0 0 1 .02-.022z"/>
+                    </svg>
+                </p>
+            </div>
+            <div v-else>
+                <button style="display:block" type="button" class="btn btn-secondary" v-on:click="packDate(year, month, day)">Submit Date</button>
             </div>
             </br>
             </br>
@@ -184,9 +206,16 @@ Vue.component('select-time-component', {
             </select>
             </br>
             </br>
-            <button style="display:block" type="button" class="btn btn-secondary" v-on:click="packTime(hour, min, sec)">Submit Time</button>
             <div v-if="submitted">
-                <b style="color: Green;">Time submitted</d>
+                <p style="margin: 0 0; text-align: left; font-weight: bold; color: green;"><span>Time Submitted</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" color="green" width="16" height="16" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path fill-rule="evenodd" d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.236.236 0 0 1 .02-.022z"/>
+                    </svg>
+                </p>
+            </div>
+            <div v-else>
+                <button style="display:block" type="button" class="btn btn-secondary" v-on:click="packTime(hour, min, sec)">Submit Time</button>
             </div>
             </br>
             </br>
@@ -415,7 +444,7 @@ function init() {
                 if (this.last_nbhs.length !=0){
                     this.last_nbhs_list += this.neighborhoods.get(this.last_nbhs[this.last_nbhs.length-1]);
                 }
-                console.log("b", this.last_incs_list)
+                //console.log("b", this.last_incs_list)
                 for(let i=0; i<this.last_incs.length-1; i++){
                     this.last_incs_list += this.last_incs[i] + ', ';
                     console.log(this.last_incs[i]);
@@ -424,7 +453,7 @@ function init() {
                     this.last_incs_list += this.last_incs[this.last_incs.length-1];
                 }
                 
-                console.log("a", this.last_incs_list);
+                //console.log("a", this.last_incs_list);
 
                 let flg = 0;         
                 let qry = "http://localhost:8000/incidents?";
@@ -628,10 +657,10 @@ function init() {
                     </div>
                     <div class="row">
                         <div v-if="!(last_sd == 0)" class="col-md-3">
-                            <p><span style="font-weight:bold;">Start Date: </span>{{last_sd}}</p>
+                            <p><span style="font-weight:bold;">Start Date: </span>{{last_sd.substring(5,7)}}-{{last_sd.substring(8)}}-{{last_sd.substring(0,4)}}</p>
                         </div>
                         <div v-if="!(last_ed == 0)" class="col-md-3">
-                            <p><span style="font-weight:bold;">End Date: </span>{{last_ed}}</p>
+                            <p><span style="font-weight:bold;">End Date: </span>{{last_ed.substring(5,7)}}-{{last_ed.substring(8)}}-{{last_ed.substring(0,4)}}</p>
                         </div>
                         <div v-if="!(last_st == 0)" class="col-md-3">
                             <p><span style="font-weight:bold;">Start Time: </span>{{last_st.substring(0,8)}}</p>
