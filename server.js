@@ -95,6 +95,20 @@ app.get('/neighborhoods', (req, res) => {
     });
 });
 
+// Responding with list of incident types
+app.get('/incident_types', (req, res) => {
+    query = `Select DISTINCT Incident From Incidents`;
+    //console.log('query: ',query);
+    Promise.all([databaseSelect(query, [])]).then((results) => {
+        var obj = JSON.stringify(results[0]);
+        obj = JSON.stringify(JSON.parse(obj), null, 2);
+        res.status(200).type('json').send(obj);
+    }).catch((error) => {
+        console.log(error);
+        res.status(500).send('Database access error');
+    });
+});
+
 // REST API: GET/incidents
 // Respond with list of crime incidents
 app.get('/incidents', (req, res) => {

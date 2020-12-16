@@ -239,6 +239,7 @@ function init() {
 */        
             is_loaded:false,
             incidents: [],
+            cb_inc_types: [],
             incident_types: [],
             selected_incident_types: [],
             neighborhoods: new Map(),
@@ -284,6 +285,17 @@ function init() {
         mounted() {
             let nbh_num_all = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17];
             this.fetchNewCrime(this.limit, nbh_num_all);
+
+            fetch("http://localhost:8000/incident_types")
+                .then(response => response.json())
+                .then((data) => {
+                    for (let i=0; i<data.length; i++){
+                        this.cb_inc_types.push(data[i].incident);
+                    }
+                    console.log(this.cb_inc_types);
+                }).catch(function(error) {
+                    console.log(error);
+                });
            
         },
         //To call methods outside vue instance: app.updateMapLtLn(params)
@@ -557,11 +569,11 @@ function init() {
             },
             selectIncidentType(i){
                 console.log('selectIncidentType: ' + this.incident_types[i]);
-                let index = this.selected_incident_types.indexOf(this.incident_types[i]);
+                let index = this.selected_incident_types.indexOf(this.cb_inc_types[i]);
                 if (index >= 0) {
                     this.selected_incident_types.splice( index, 1 );
                 }else{
-                    this.selected_incident_types.push(this.incident_types[i]);
+                    this.selected_incident_types.push(this.cb_inc_types[i]);
                 }
             },
             toggleMapPan(){
@@ -614,9 +626,9 @@ function init() {
                         <div class="col-sm-6">
                             <div>
                                 <b>Incidents:</b>
-                                <div v-for="(incident,i) in incident_types">
+                                <div v-for="(incident,i) in cb_inc_types">
                                     <input type="checkbox" v-on:click="selectIncidentType(i)">
-                                    <label>{{incident_types[i]}}</label>
+                                    <label>{{cb_inc_types[i]}}</label>
                                 </div>
                             </div>
                         </div>
