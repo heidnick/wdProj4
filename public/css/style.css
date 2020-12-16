@@ -21,6 +21,15 @@ margin-left: 2rem;
 body{
 background-color:grey;
 }
+select {
+    border: black;
+    padding: 0 1em 0 0;
+    margin: 0;
+    font-family: inherit;
+    font-size: inherit;
+    cursor: inherit;
+    line-height: inherit;
+}
 
 .things{
 border-style:double;
@@ -80,3 +89,4 @@ td {
     cursor: pointer; /* Add a mouse pointer on hover */
     padding: 15px; /* Some padding */
 }
+

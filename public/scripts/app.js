@@ -1,6 +1,8 @@
 let app;
 let map;
 let flag = 0;
+var markers = [];
+let init_flag = 1;
 let crimes_per_nbhood = new Array(17).fill(0);
 let neighborhood_markers = 
 [
@@ -39,7 +41,9 @@ Vue.component('select-date-component', {
             hour: 0,
             min: 0,
             sec: 0,
-            day: 0,     
+            day: 0,
+            date_flag: 0,
+            submitted: 0,     
         }
     },
     props: ['date'],
@@ -67,28 +71,22 @@ Vue.component('select-date-component', {
             //console.log('big', this.bigm_flg);
             //console.log('feb', this.feb_flg);
         },
-        packDate: function(year, month, day, hour, min, sec){
-            this.date = year + "-";
-            if (month < 10 ){
-                this.date += "0" + month + "-";
-            }else{this.date+=month+'-';}
-            if (day < 10 ){
-                this.date += "0" + day+"T";
-            }else{this.date+=day+"T";}
-            if (hour < 10) {
-                this.date += "0" + hour;
-            }else{this.date+=hour;}
-            this.date+=":";
-            if (min < 10){
-                this.date += "0" + min;
-            }else{this.date+=min;}
-            this.date+=":";
-            if (sec < 10){
-                this.date += "0" + sec;
-            }else{this.date+=sec;}
-            this.date+=".000";
-            //console.log('finished date ' + this.date);
-            this.$emit('clicked-finished-date', this.date);
+        packDate: function(year, month, day){
+            if (year == 0 || month == 0 || day == 0){
+                this.date_flag = 1;
+            }else{ 
+                this.date_flag = 0;
+                 this.date = year + "-";
+                if (month < 10 ){
+                    this.date += "0" + month + "-";
+                }else{this.date+=month+'-';}
+                if (day < 10 ){
+                    this.date += "0" + day;
+                }else{this.date+=day}
+                //console.log('finished date ' + this.date);
+                this.$emit('clicked-finished-date', this.date);
+                this.submitted = 1;
+            }
         }
     },
     template: `
@@ -124,6 +122,54 @@ Vue.component('select-date-component', {
                     </select>
                 </div>
             </div>
+            <div v-if="date_flag">
+                <b style="color: red;">You must select all fields</b>
+            </div>
+            </br>
+            </br>
+            <button style="display:block" type="button" class="btn btn-secondary" v-on:click="packDate(year, month, day, hour, min, sec)">Submit Date</button>
+            <div v-if="submitted">
+                <b style="color: Green;">Date submitted</d>
+            </div>
+            </br>
+            </br>
+        </div>
+    `
+});
+
+Vue.component('select-time-component', {
+    data: function() {
+        return { time: 0},
+        {
+            time: 0,
+            hour: 0,
+            min: 0,
+            sec: 0,
+            submitted: 0,    
+        }
+    },
+    props: ['time'],
+    methods: {
+        packTime: function(hour, min, sec){
+            if (hour < 10) {
+                this.time = "0" + hour;
+            }else{this.time=hour;}
+            this.time+=":";
+            if (min < 10){
+                this.time += "0" + min;
+            }else{this.time+=min;}
+            this.time+=":";
+            if (sec < 10){
+                this.time += "0" + sec;
+            }else{this.time+=sec;}
+            this.time+=".000";
+        
+            this.$emit('clicked-finished-time', this.time);
+            this.submitted = 1;
+        }
+    },
+    template: `
+        <div>
             <label>Hour:</label>
             <select v-model="hour">
                 <option v-for="num in 24">{{num - 1}}</option>
@@ -138,7 +184,10 @@ Vue.component('select-date-component', {
             </select>
             </br>
             </br>
-            <button style="display:block" type="button" class="btn btn-secondary" v-on:click="packDate(year, month, day, hour, min, sec)">Submit Date</button>
+            <button style="display:block" type="button" class="btn btn-secondary" v-on:click="packTime(hour, min, sec)">Submit Time</button>
+            <div v-if="submitted">
+                <b style="color: Green;">Time submitted</d>
+            </div>
             </br>
             </br>
         </div>
@@ -171,10 +220,22 @@ function init() {
             searched_address: "",
             address: "",
             limit: 1000,
+            starttime: 0,
+            endtime: 0,
             startdate: 0,
             enddate: 0,
             canPanMap: 1,
             address_flag: 0,
+            new_fetch: 0,
+            last_sd: 0,
+            last_ed: 0,
+            last_st: 0,
+            last_et: 0,
+            last_lim: 0,
+            last_nbhs: [],
+            last_incs: [],
+            last_incs_list: "",
+            last_nbhs_list: "",
 
             map: {
                 center: {
@@ -330,7 +391,41 @@ function init() {
                     console.log(error);
                 });
 
-                /* Append all selected form values to query to incidents for table build */
+                /* Append all selected form values to query to incidents for table build
+                */
+                //grab all last vars for showing results
+                if (init_flag){
+                    this.new_fetch = 0;
+                    init_flag = 0;
+                }else{
+                    this.new_fetch = 1;
+                }
+                this.last_sd = this.startdate;
+                this.last_ed = this.enddate;
+                this.last_st = this.starttime;
+                this.last_et = this.endtime;
+                this.last_lim = this.limit;
+                this.last_nbhs = nbh_num_arr;
+                this.last_incs = this.selected_incident_types;
+                this.last_incs_list = "";
+                this.last_nbhs_list = "";
+                for(let i=0; i<this.last_nbhs.length-1; i++){
+                    this.last_nbhs_list += this.neighborhoods.get(this.last_nbhs[i]) + ', ';
+                }
+                if (this.last_nbhs.length !=0){
+                    this.last_nbhs_list += this.neighborhoods.get(this.last_nbhs[this.last_nbhs.length-1]);
+                }
+                console.log("b", this.last_incs_list)
+                for(let i=0; i<this.last_incs.length-1; i++){
+                    this.last_incs_list += this.last_incs[i] + ', ';
+                    console.log(this.last_incs[i]);
+                }
+                if (this.last_incs.length !=0){
+                    this.last_incs_list += this.last_incs[this.last_incs.length-1];
+                }
+                
+                console.log("a", this.last_incs_list);
+
                 let flg = 0;         
                 let qry = "http://localhost:8000/incidents?";
                 if (nbh_num_arr.length > 0){
@@ -348,6 +443,14 @@ function init() {
                 if (this.enddate != 0){
                     qry+= "&end_date="+ this.enddate;
                 }
+                if (this.starttime != 0){
+                    if (flg){qry += "&";}
+                    qry+= "start_time=" + this.starttime;
+                    flg = 1;
+                }
+                if (this.endtime != 0){
+                    qry+= "&end_time="+ this.endtime;
+                }
                 if (this.selected_incident_types.length > 0){
                     if (flg){qry+='&'}
                     qry+='incident=';
@@ -360,16 +463,17 @@ function init() {
                  
                 if (flg){qry += "&";}
                 qry += "limit=" + limit;
-                console.log(qry);
+                console.log("outgoing query:",qry);
                 fetch(qry)
                 .then(response => response.json())
                 .then((data) => {
                     this.incidents = data;
                     let nbh_num = 0;
                     //Janky but functional way to add neighborhood name and incident type to incidents array
+                    crimes_per_nbhood = new Array(17).fill(0);
                     for (let i=0; i<this.incidents.length; i++){
                         nbh_num  = this.incidents[i].neighborhood_number;
-                        crimes_per_nbhood[nbh_num]++;
+                        crimes_per_nbhood[nbh_num-1]++;
                         this.incidents[i].neighborhood_name = this.neighborhoods.get(this.incidents[i].neighborhood_number);
                         this.incidents[i].incident_type = this.codes.get(this.incidents[i].code);
                         let idx = this.incident_types.indexOf(this.incidents[i].incident);
@@ -377,9 +481,19 @@ function init() {
                             this.incident_types.push(data[i].incident);
                         }
                     }
+                    //updating markers
+                    for (let i=0; i<markers.length; i++){
+                        markers[i]._popup.setContent(this.neighborhoods.get(i+1) +"</b><br>Crimes: " + crimes_per_nbhood[i]);
+                    }
+                    
                     //reset all selected
                     this.selected_incident_types = new Array();
                     this.selected_nbh_name = new Array();
+                    this.starttime = 0;
+                    this.endtime = 0;
+                    this.startdate = 0;
+                    this.enddate = 0;
+                    this.limit= 1000;
                     //Need a delay otherwise will get errors
                     this.is_loaded = true;
                     flag = 1;
@@ -388,7 +502,7 @@ function init() {
                 });
             },
             selectNbhNum(idx){
-                console.log(this.selected_nbh_name);
+                //console.log(this.selected_nbh_name);
                 let index = this.selected_nbh_name.indexOf(idx);
                 if (index >= 0) {
                     this.selected_nbh_name.splice( index, 1 );
@@ -403,6 +517,14 @@ function init() {
             clickedFinishedED: function(value){
                 //console.log('end date: ', value);
                 this.enddate = value;
+            },
+            clickedFinishedST: function(value){
+                //console.log('start date: ', value);
+                this.starttime = value;
+            },
+            clickedFinishedET: function(value){
+                //console.log('end date: ', value);
+                this.endtime = value;
             },
             selectIncidentType(i){
                 console.log('selectIncidentType: ' + this.incident_types[i]);
@@ -427,8 +549,10 @@ function init() {
         template: `
             <div v-if="this.is_loaded">
                 <div style="float:left; margin-left: 5%; padding: 20px; border: 1px solid black;">
-                    <button v-if="canPanMap" type="button" class="btn btn-success" v-on:click="toggleMapPan()">Map Pan Enabled</button>
-                    <button v-else type="button" class="btn btn-danger" v-on:click="toggleMapPan()">Map Pan Disabled</button>
+                    <div style="margin: auto; width: 30%;">
+                        <button v-if="canPanMap" type="button" class="btn btn-success" v-on:click="toggleMapPan()">Map Pan Enabled</button>
+                        <button v-else type="button" class="btn btn-danger" v-on:click="toggleMapPan()">Map Pan Disabled</button>
+                    </div>
                     <h5>Latitude: </h5>
                     <button type="button" class="btn btn-outline-primary" v-on:click="changeLat(lat,-1)">-</button>
                     <button type="button" class="btn btn-outline-primary" v-on:click="changeLat(lat,1)">+</button>
@@ -442,16 +566,14 @@ function init() {
                     <input size="50" v-model.lazy="address"/>
                     <button type="button" class="btn btn-primary" v-on:click="updateMapAddr(address)">Find Address</button>
                 </div>
-                <div style="margin: 1%; clear:left" class="container">
-                    <div class="row">
-                        <div class="col-sm-6">
-                                                    </div> 
-                    </div>
-                </div>
                 <div style=" padding: 20px; margin: 1%; border: 1px solid black; clear:left" class="container">
                     <div class="row">
-                        <div class="col-sm-4">
-                            <h3>Crime Filters:</h3>
+                        <div class="col-sm-0">
+                            <h3 style="text-decoration: underline;">Crime Filters:</h3>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">
                             <div>
                                 <b>Neighborhoods:</b>
                                 <div v-for="(neighborhood, index) in neighborhoods" :key="neighborhood">
@@ -460,7 +582,7 @@ function init() {
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-4">
+                        <div class="col-sm-6">
                             <div>
                                 <b>Incidents:</b>
                                 <div v-for="(incident,i) in incident_types">
@@ -469,17 +591,70 @@ function init() {
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-4">
-                            <h5>Start Date:</h5>
+                    </div>
+                    </br>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <b>Start Date:</b>
                             <select-date-component :date="startdate" @clicked-finished-date="clickedFinishedSD"></select-date-component>
-                            <h5>End Date:</h5>
+                            <b>End Date:</b>
                             <select-date-component :date="enddate" @clicked-finished-date="clickedFinishedED"></select-date-component>
+                        </div>
+                        <div class="col-sm-6">
+                            <b>Start Time:</b>
+                            <select-time-component :time="starttime" @clicked-finished-time="clickedFinishedST"></select-time-component>
+                            <b>End Time:</b>
+                            <select-time-component :time="endtime" @clicked-finished-time="clickedFinishedET"></select-time-component>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-9">
                             <div>
-                                <b>Number of Incidents: </b><input size="10" v-model.lazy="limit"/> (max: 1000) 
+                                <b>Number of Incidents: </b>
+                                </br>
+                                <input size="10" v-model.lazy="limit"/> (max: 1000) 
                             </div>
-                            </br>
-                            </br>
+                        </div>
+                        <div class="col-sm-3">
                             <button type="button" class="btn btn-primary btn-lg" v-on:click="fetchNewCrime(limit, selected_nbh_name)">Submit Crime Query</button>
+                        </div>        
+                    </div>
+                </div>
+                <div v-if="new_fetch" style=" padding: 20px; margin: 1%; border: 1px solid black; clear:left text-align: left;" class="container">
+                    <div class="row" >
+                        <div class="col-md-0">
+                            <h5>Showing Results For: </h5>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div v-if="!(last_sd == 0)" class="col-md-3">
+                            <p><span style="font-weight:bold;">Start Date: </span>{{last_sd}}</p>
+                        </div>
+                        <div v-if="!(last_ed == 0)" class="col-md-3">
+                            <p><span style="font-weight:bold;">End Date: </span>{{last_ed}}</p>
+                        </div>
+                        <div v-if="!(last_st == 0)" class="col-md-3">
+                            <p><span style="font-weight:bold;">Start Time: </span>{{last_st.substring(0,8)}}</p>
+                        </div>
+                        <div v-if="!(last_et == 0)" class="col-md-3">
+                            <p><span style="font-weight:bold;">End Time: </span>{{last_et.substring(0,8)}}</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div v-if="last_nbhs.length > 0 && last_nbhs.length < 17" class="col-md-5">
+                            <div>
+                                <p><span style="font-weight:bold;">Neighborhoods: </span>{{last_nbhs_list}}</p>
+                            </div>
+                        </div>
+                        <div v-if="last_incs.length > 0 && last_incs.length < 17" class="col-md-5">
+                            <div>
+                                <p><span style="font-weight:bold;">Incident Types: </span>{{last_incs_list}}</p>
+                            </div>
+                        </div>
+                        <div v-if="last_lim > 0 && last_lim < 1000" class="col-md-2">
+                            <div>
+                                <p><span style="font-weight:bold;">Limit: </span>{{last_lim}}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -513,8 +688,8 @@ function init() {
                             <button type="button" class="btn btn-outline-light" v-on:click="addTableMarker(incidents[i])">Add</button>
                         </td>
                         <td>{{i + 1}}</td>
-                        <td>{{incidents[i].date}}</td>
-                        <td>{{incidents[i].time}}</td>
+                        <td>{{incidents[i].date.substring(5,7)}}-{{incidents[i].date.substring(8)}}-{{incidents[i].date.substring(0,4)}}</td>
+                        <td>{{incidents[i].time.substring(0,8)}}</td>
                         <td>{{incidents[i].incident}}</td>
                         <td>{{incidents[i].incident_type}}</td>
                         <td>{{incidents[i].neighborhood_name}}</td> 
@@ -528,7 +703,8 @@ function init() {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         minZoom: 11,
-        maxZoom: 18
+        maxZoom: 18,
+        
     }).addTo(map);
     map.setMaxBounds([[44.883658, -93.217977], [45.008206, -92.993787]]);
     
@@ -550,7 +726,6 @@ function init() {
         if(flag == false) {
            window.setTimeout(checkFlag, 400); /* this checks the flag every 100 milliseconds*/
         } else {
-            var markers = [];
             for (let i=0; i<neighborhood_markers.length; i++){
                 markers[i] = L.marker([neighborhood_markers[i]['location'][0], neighborhood_markers[i]['location'][1]]);
                 markers[i].bindPopup("<b>"+ app._data.neighborhoods.get(i+1) +"</b><br>Crimes: " + crimes_per_nbhood[i]);
@@ -570,11 +745,13 @@ function init() {
     }
 
     function onMapMoveend() {
+        //console.log('mappan called');
+        //console.log(map);
         if (app._data.canPanMap == 1){      
-            app._data.lat = map.getCenter().lat;
-            app._data.lon = map.getCenter().lng;
+            app._data.lat = clamp(map.getCenter().lat, 44.883658, 45.008206);
+            app._data.lon = clamp(map.getCenter().lng, -93.217977, -92.993787);
             
-            getJSON('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + map.getCenter().lat + '&lon=' + map.getCenter().lng).then((result) => {
+            getJSON('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + clamp(map.getCenter().lat, 44.883658, 45.008206) + '&lon=' + clamp(map.getCenter().lng, -93.217977, -92.993787)).then((result) => {
                 //Get address from result
                 app._data.address = result.display_name;
 
@@ -588,6 +765,7 @@ function init() {
 //Pelham Boulevard, Saint Paul, Ramsey County, Minnesota, 55104, United States of America
 //1300 University Ave W
     function onMapUpdate(lat, lon){
+        //console.log('onmapupdate called');
         lat = clamp(lat, 44.883658, 45.008206);
         lon = clamp(lon, -93.217977, -92.993787);
         console.log('onmapupdate called');
@@ -599,16 +777,6 @@ function init() {
         map.panTo(latlng);
     }
 
-    function chooseUpdateMethod(){
-        if (new_loc_flag){
-            new_loc_flag = 0;
-        }else{
-            onMapMoveend();
-        }
-    }
-
-    //map.on('click', onMapClick);
-    //map.on('moveend', chooseUpdateMethod);
     map.on('moveend', onMapMoveend);
     
 }

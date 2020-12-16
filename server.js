@@ -101,6 +101,8 @@ app.get('/incidents', (req, res) => {
     let url = new URL(req.protocol + '://' + req.get('host') + req.originalUrl);
     let params = [];
     let flag = 0;
+    let start_time = url.searchParams.get('start_time');
+    let end_time = url.searchParams.get('end_time');
     let start_date = url.searchParams.get('start_date');
     let end_date = url.searchParams.get('end_date');
     let code = url.searchParams.get('code');
@@ -157,6 +159,20 @@ app.get('/incidents', (req, res) => {
         console.log("end-date");
         query = query + 'date < ? ';
         params.push(end_date);
+    }
+    //START_TIME
+    if (start_time != null){
+        if (flag){ query += ' AND ';}else{query += ' WHERE '; flag=1;}
+        console.log("start-time");
+        query = query + 'time > ? ';
+        params.push(start_time);
+    }
+    //END_TIME
+    if (end_time != null){
+        if (flag){ query += ' AND '}else{query +=' WHERE '; flag=1;}
+        console.log("end-time");
+        query = query + 'time < ? ';
+        params.push(end_time);
     }
     //GRID
     console.log(grid);
